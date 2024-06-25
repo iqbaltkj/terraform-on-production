@@ -2,27 +2,19 @@ name: 'Terragrunt CI/CD'
 
 on:
   push:
-    paths:
-    - 'terraform/deployments/**'
     branches:
     - main
   pull_request:
     paths:
     - 'terraform/deployments/**'
-  workflow_dispatch:
-    inputs:
-      action:
-        description: 'Action to perform'
-        required: true
-        default: 'apply'
-        options:
-        - apply
-        - destroy
+    branches:
+    - main
 
 jobs:
-  terragrunt:
-    name: 'Terragrunt Plan and Apply/Destroy'
+  terragrunt_plan:
+    name: 'Terragrunt Plan'
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
 
     steps:
     - name: 'Checkout code'
@@ -55,13 +47,13 @@ jobs:
     - name: 'Determine Changed Directories'
       id: changes
       run: |
-        MODIFIED_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'terraform/deployments/.*\.hcl$' | sed 's|/[^/]*$||' | uniq)
+        MODIFIED_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'terraform/deployments/.*\.tf$' | sed 's|/[^/]*$||' | uniq)
         echo "::set-output name=modified_dirs::$MODIFIED_DIRS"
 
-        DELETED_DIRS=$(git diff --name-status ${{ github.event.before }} ${{ github.sha }} | grep '^D' | grep 'terraform/deployments/.*\.hcl$' | sed 's|D\s*||' | sed 's|/[^/]*$||' | uniq)
+        DELETED_DIRS=$(git diff --name-status ${{ github.event.before }} ${{ github.sha }} | grep '^D' | grep 'terraform/deployments/.*\.tf$' | sed 's|D\s*||' | sed 's|/[^/]*$||' | uniq)
         echo "::set-output name=deleted_dirs::$DELETED_DIRS"
 
-    - name: 'Terragrunt Plan'
+    - name: 'Terragrunt Init and Plan'
       run: |
         for dir in ${{ steps.changes.outputs.modified_dirs }}; do
           (
@@ -71,31 +63,12 @@ jobs:
         done
       shell: bash
 
-    - name: 'Create Plan Approval Request'
-      uses: actions/github-script@v4
-      env:
-        GH_PAT: ${{ secrets.GH_PAT }}
-      with:
-        github-token: ${{ secrets.GH_PAT }}
-        script: |
-          const modifiedDirs = '${{ steps.changes.outputs.modified_dirs }}'.split(' ');
-          const deletedDirs = '${{ steps.changes.outputs.deleted_dirs }}'.split(' ');
-
-          if (modifiedDirs.length > 0 || deletedDirs.length > 0) {
-            await github.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'Terragrunt Plan Approval Request',
-              body: `Terragrunt plans are ready for review.\n\n**Modified Directories:**\n${modifiedDirs.join('\n')}\n\n**Deleted Directories:**\n${deletedDirs.join('\n')}\n\nApprove this issue to proceed with \`terragrunt apply\` or \`terragrunt destroy\`.`,
-              labels: ['terragrunt', 'approval']
-            });
-          }
-
   terragrunt_apply:
     name: 'Terragrunt Apply'
-    needs: terragrunt
+    needs: terragrunt_plan
     runs-on: ubuntu-latest
-    if: github.event.inputs.action == 'apply'
+    if: github.ref == 'refs/heads/main'
+
     steps:
     - name: 'Checkout code'
       uses: actions/checkout@v2
@@ -124,7 +97,7 @@ jobs:
 
     - name: 'Run Terragrunt Apply'
       run: |
-        for dir in ${{ steps.changes.outputs.modified_dirs }}; do
+        for dir in ${{ needs.terragrunt_plan.outputs.modified_dirs }}; do
           (
             cd $dir
             terragrunt apply -auto-approve tfplan
@@ -134,9 +107,10 @@ jobs:
 
   terragrunt_destroy:
     name: 'Terragrunt Destroy'
-    needs: terragrunt
+    needs: terragrunt_plan
     runs-on: ubuntu-latest
-    if: github.event.inputs.action == 'destroy'
+    if: github.ref == 'refs/heads/main'
+
     steps:
     - name: 'Checkout code'
       uses: actions/checkout@v2
@@ -165,9 +139,8 @@ jobs:
 
     - name: 'Run Terragrunt Destroy'
       run: |
-        for dir in ${{ steps.changes.outputs.deleted_dirs }}; do
+        for dir in ${{ needs.terragrunt_plan.outputs.deleted_dirs }}; do
           (
-            echo $dir
             cd $dir
             terragrunt destroy -auto-approve
           )
