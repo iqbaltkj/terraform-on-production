@@ -47,10 +47,10 @@ jobs:
     - name: 'Determine Changed Directories'
       id: changes
       run: |
-        MODIFIED_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'terraform/deployments/.*\.tf$' | sed 's|/[^/]*$||' | uniq)
+        MODIFIED_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'terraform/deployments/.*\.hcl$' | sed 's|/[^/]*$||' | uniq)
         echo "::set-output name=modified_dirs::$MODIFIED_DIRS"
 
-        DELETED_DIRS=$(git diff --name-status ${{ github.event.before }} ${{ github.sha }} | grep '^D' | grep 'terraform/deployments/.*\.tf$' | sed 's|D\s*||' | sed 's|/[^/]*$||' | uniq)
+        DELETED_DIRS=$(git diff --name-status ${{ github.event.before }} ${{ github.sha }} | grep '^D' | grep 'terraform/deployments/.*\.hcl$' | sed 's|D\s*||' | sed 's|/[^/]*$||' | uniq)
         echo "::set-output name=deleted_dirs::$DELETED_DIRS"
 
     - name: 'Terragrunt Init and Plan'
