@@ -20,7 +20,7 @@ jobs:
     - name: 'Checkout code'
       uses: actions/checkout@v2
       with:
-        fetch-depth: 2
+        fetch-depth: 0 # Fetch all history for all branches and tags
 
     - name: 'Set up Terraform'
       uses: hashicorp/setup-terraform@v1
@@ -50,8 +50,7 @@ jobs:
         PREV_COMMIT=$(git rev-parse HEAD^1)
         MODIFIED_DIRS=$(git diff --name-only --diff-filter=d $PREV_COMMIT origin/main -- terraform/deployments/ | xargs dirname | sort | uniq)
         echo "::set-output name=modified_dirs::$MODIFIED_DIRS"
-
-        DELETED_DIRS=$(git diff --name-status ${{ github.event.before }} ${{ github.sha }} | grep '^D' | grep 'terraform/deployments/.*\.hcl$' | sed 's|D\s*||' | sed 's|/[^/]*$||' | uniq)
+        DELETED_DIRS=$(git diff --name-only --diff-filter=D $PREV_COMMIT origin/main -- terraform/deployments/ | xargs dirname | sort | uniq)
         echo "::set-output name=deleted_dirs::$DELETED_DIRS"
 
     - name: 'Terragrunt Plan'
