@@ -65,6 +65,7 @@ jobs:
       run: |
         for dir in ${{ steps.changes.outputs.modified_dirs }}; do
           (
+            echo $dir
             cd $dir
             terragrunt plan -out=tfplan
           )
