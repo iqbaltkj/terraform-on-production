@@ -73,14 +73,18 @@ jobs:
 
     - name: 'Create Plan Approval Request'
       uses: actions/github-script@v4
+      env:
+        GH_PAT: ${{ secrets.GH_PAT }}
       with:
+        github-token: ${{ secrets.GH_PAT }}
         script: |
           const modifiedDirs = '${{ steps.changes.outputs.modified_dirs }}'.split(' ');
           const deletedDirs = '${{ steps.changes.outputs.deleted_dirs }}'.split(' ');
 
           if (modifiedDirs.length > 0 || deletedDirs.length > 0) {
             await github.issues.create({
-              ...context.repo,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
               title: 'Terragrunt Plan Approval Request',
               body: `Terragrunt plans are ready for review.\n\n**Modified Directories:**\n${modifiedDirs.join('\n')}\n\n**Deleted Directories:**\n${deletedDirs.join('\n')}\n\nApprove this issue to proceed with \`terragrunt apply\` or \`terragrunt destroy\`.`,
               labels: ['terragrunt', 'approval']
