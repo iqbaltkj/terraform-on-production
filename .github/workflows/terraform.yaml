@@ -1,17 +1,27 @@
-name: 'Terraform CI/CD'
+name: 'Terragrunt CI/CD'
 
 on:
   push:
+    paths:
+    - 'terraform/deployments/**'
     branches:
     - main
   pull_request:
-    branches:
-    - main
+    paths:
+    - 'terraform/deployments/**'
   workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'apply'
+        options:
+        - apply
+        - destroy
 
 jobs:
-  terraform:
-    name: 'Terraform Plan and Apply/Destroy'
+  terragrunt:
+    name: 'Terragrunt Plan and Apply/Destroy'
     runs-on: ubuntu-latest
 
     steps:
@@ -25,6 +35,12 @@ jobs:
       with:
         terraform_version: 1.0.11 # Specify your desired Terraform version
 
+    - name: 'Install Terragrunt'
+      run: |
+        wget https://github.com/gruntwork-io/terragrunt/releases/download/v0.36.0/terragrunt_linux_amd64
+        chmod +x terragrunt_linux_amd64
+        sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
+
     - name: 'Authenticate to Google Cloud'
       uses: google-github-actions/auth@v1
       with:
@@ -34,7 +50,6 @@ jobs:
       uses: google-github-actions/setup-gcloud@v1
       with:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
-        service_account_key: ${{ secrets.GCP_CREDENTIALS }}
         export_default_credentials: true
 
     - name: 'Determine Changed Directories'
@@ -46,14 +61,12 @@ jobs:
         DELETED_DIRS=$(git diff --name-status ${{ github.event.before }} ${{ github.sha }} | grep '^D' | grep '.*\.tf$' | sed 's|D\s*||' | sed 's|/[^/]*$||' | uniq)
         echo "::set-output name=deleted_dirs::$DELETED_DIRS"
 
-    - name: 'Terraform Init and Plan'
+    - name: 'Terragrunt Plan'
       run: |
         for dir in ${{ steps.changes.outputs.modified_dirs }}; do
           (
             cd $dir
-            terraform init -backend-config="path=$dir/terraform.tfstate"
-            terraform validate
-            terraform plan -out=tfplan
+            terragrunt plan -out=tfplan
           )
         done
       shell: bash
@@ -68,15 +81,15 @@ jobs:
           if (modifiedDirs.length > 0 || deletedDirs.length > 0) {
             await github.issues.create({
               ...context.repo,
-              title: 'Terraform Plan Approval Request',
-              body: `Terraform plans are ready for review.\n\n**Modified Directories:**\n${modifiedDirs.join('\n')}\n\n**Deleted Directories:**\n${deletedDirs.join('\n')}\n\nApprove this issue to proceed with \`terraform apply\` or \`terraform destroy\`.`,
-              labels: ['terraform', 'approval']
+              title: 'Terragrunt Plan Approval Request',
+              body: `Terragrunt plans are ready for review.\n\n**Modified Directories:**\n${modifiedDirs.join('\n')}\n\n**Deleted Directories:**\n${deletedDirs.join('\n')}\n\nApprove this issue to proceed with \`terragrunt apply\` or \`terragrunt destroy\`.`,
+              labels: ['terragrunt', 'approval']
             });
           }
 
-  terraform_apply:
-    name: 'Terraform Apply'
-    needs: terraform
+  terragrunt_apply:
+    name: 'Terragrunt Apply'
+    needs: terragrunt
     runs-on: ubuntu-latest
     if: github.event.inputs.action == 'apply'
     steps:
@@ -88,6 +101,12 @@ jobs:
       with:
         terraform_version: 1.0.11
 
+    - name: 'Install Terragrunt'
+      run: |
+        wget https://github.com/gruntwork-io/terragrunt/releases/download/v0.36.0/terragrunt_linux_amd64
+        chmod +x terragrunt_linux_amd64
+        sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
+
     - name: 'Authenticate to Google Cloud'
       uses: google-github-actions/auth@v1
       with:
@@ -97,22 +116,21 @@ jobs:
       uses: google-github-actions/setup-gcloud@v1
       with:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
-        service_account_key: ${{ secrets.GCP_CREDENTIALS }}
         export_default_credentials: true
 
-    - name: 'Run Terraform Apply'
+    - name: 'Run Terragrunt Apply'
       run: |
         for dir in ${{ steps.changes.outputs.modified_dirs }}; do
           (
             cd $dir
-            terraform apply -auto-approve tfplan
+            terragrunt apply -auto-approve tfplan
           )
         done
       shell: bash
 
-  terraform_destroy:
-    name: 'Terraform Destroy'
-    needs: terraform
+  terragrunt_destroy:
+    name: 'Terragrunt Destroy'
+    needs: terragrunt
     runs-on: ubuntu-latest
     if: github.event.inputs.action == 'destroy'
     steps:
@@ -124,6 +142,12 @@ jobs:
       with:
         terraform_version: 1.0.11
 
+    - name: 'Install Terragrunt'
+      run: |
+        wget https://github.com/gruntwork-io/terragrunt/releases/download/v0.36.0/terragrunt_linux_amd64
+        chmod +x terragrunt_linux_amd64
+        sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
+
     - name: 'Authenticate to Google Cloud'
       uses: google-github-actions/auth@v1
       with:
@@ -133,16 +157,14 @@ jobs:
       uses: google-github-actions/setup-gcloud@v1
       with:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
-        service_account_key: ${{ secrets.GCP_CREDENTIALS }}
         export_default_credentials: true
 
-    - name: 'Run Terraform Destroy'
+    - name: 'Run Terragrunt Destroy'
       run: |
         for dir in ${{ steps.changes.outputs.deleted_dirs }}; do
           (
             cd $dir
-            terraform init -backend-config="path=$dir/terraform.tfstate"
-            terraform destroy -auto-approve
+            terragrunt destroy -auto-approve
           )
         done
       shell: bash
