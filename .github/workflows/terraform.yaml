@@ -47,7 +47,7 @@ jobs:
         export_default_credentials: true
 
     - name: 'Fetch main branch'
-      run: git fetch origin main
+      run: git fetch origin main && git rev-parse HEAD^1 && git diff --name-only --diff-filter=d $PREV_COMMIT origin/main | xargs -r dirname | sort | uniq
 
     - name: 'Determine Changed Directories'
       id: changes
