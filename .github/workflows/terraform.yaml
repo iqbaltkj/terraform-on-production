@@ -2,6 +2,8 @@ name: 'Terragrunt CI/CD'
 
 on:
   push:
+    paths:
+    - 'terraform/deployments/**'
     branches:
     - main
   pull_request:
