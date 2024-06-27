@@ -54,6 +54,7 @@ jobs:
         for dir in $modified_dirs; do
           (
             cd $dir
+            ls
             terragrunt plan
           )
         done
@@ -66,6 +67,7 @@ jobs:
         for dir in $deleted_dirs; do
           (
             cd $dir
+            ls
             terragrunt plan
           )
         done
@@ -114,6 +116,7 @@ jobs:
         for dir in $modified_dirs; do
           (
             cd $dir
+            ls
             terragrunt apply -auto-approve
           )
         done
@@ -161,6 +164,7 @@ jobs:
         for dir in $deleted_dirs; do
           (
             cd $dir
+            ls
             terragrunt destroy -auto-approve
           )
         done
