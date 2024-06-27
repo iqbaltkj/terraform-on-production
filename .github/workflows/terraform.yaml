@@ -19,10 +19,10 @@ jobs:
     if: github.event_name == 'pull_request'
 
     steps:
-    - name: 'Checkout code'
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0 # Fetch all history for all branches and tags
+    # - name: 'Checkout code'
+    #   uses: actions/checkout@v2
+    #   with:
+    #     fetch-depth: 0 # Fetch all history for all branches and tags
 
     - name: 'Set up Terraform'
       uses: hashicorp/setup-terraform@v1
@@ -55,6 +55,19 @@ jobs:
 
     - name: 'Terragrunt Plan Apply'
       run: |
+        ls
+        git rev-parse HEAD^1
+        git diff --name-only --diff-filter=d $PREV_COMMIT origin/main | xargs -r dirname | sort | uniq
+        variable_low=$(git diff --name-only --diff-filter=d $PREV_COMMIT origin/main | xargs -r dirname | sort | uniq)
+        VARIABLE_HIGH=$(git diff --name-only --diff-filter=d $PREV_COMMIT origin/main | xargs -r dirname | sort | uniq)
+        echo "variable_low = ${variable_low}"
+        echo "variable_low = $variable_low"
+        echo "variable_high = ${variable_high}"
+        echo "variable_high = $VARIABLE_HIGH"
+      shell: bash
+
+    - name: 'Terragrunt Plan Apply'
+      run: |
         PREV_COMMIT=$(git rev-parse HEAD^1)
         MODIFIED_DIRS=$(git diff --name-only --diff-filter=d $PREV_COMMIT origin/main | xargs -r dirname | sort | uniq)
         for dir in $MODIFIED_DIRS; do
@@ -81,7 +94,8 @@ jobs:
     name: 'Terragrunt Apply'
     needs: terragrunt_plan
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push'
+    # if: github.ref == 'refs/heads/main'
 
     steps:
     - name: 'Checkout code'
