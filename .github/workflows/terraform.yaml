@@ -29,10 +29,12 @@ jobs:
 
     - name: 'Set up Terraform'
       uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: "1.5.7"
 
     - name: 'Install Terragrunt'
       run: |
-        wget https://github.com/gruntwork-io/terragrunt/releases/download/v0.59.5/terragrunt_linux_amd64
+        wget https://github.com/gruntwork-io/terragrunt/releases/download/v0.52.3/terragrunt_linux_amd64
         chmod +x terragrunt_linux_amd64
         sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
 
@@ -91,10 +93,12 @@ jobs:
 
     - name: 'Set up Terraform'
       uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: "1.5.7"
 
     - name: 'Install Terragrunt'
       run: |
-        wget https://github.com/gruntwork-io/terragrunt/releases/download/v0.59.5/terragrunt_linux_amd64
+        wget https://github.com/gruntwork-io/terragrunt/releases/download/v0.52.3/terragrunt_linux_amd64
         chmod +x terragrunt_linux_amd64
         sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
 
@@ -139,10 +143,12 @@ jobs:
 
     - name: 'Set up Terraform'
       uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: "1.5.7"
 
     - name: 'Install Terragrunt'
       run: |
-        wget https://github.com/gruntwork-io/terragrunt/releases/download/v0.59.5/terragrunt_linux_amd64
+        wget https://github.com/gruntwork-io/terragrunt/releases/download/v0.52.3/terragrunt_linux_amd64
         chmod +x terragrunt_linux_amd64
         sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
 
