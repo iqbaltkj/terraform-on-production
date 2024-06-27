@@ -31,25 +31,8 @@ jobs:
     - name: Fetch main branch
       run: git fetch origin main
 
-    - name: 'Debug'
-      run: |
-        ls
-        git branch --show-current
-        git rev-parse 'HEAD^1'
-        prev_commit=$(git rev-parse 'HEAD^1')
-        git diff --name-only --diff-filter=d $prev_commit terraform/deployments| xargs -r dirname | sort | uniq
-        variable_low=$(git diff --name-only --diff-filter=d $prev_commit terraform/deployments| xargs -r dirname | sort | uniq)
-        variable_high=$(git diff --name-only --diff-filter=d $prev_commit terraform/deployments| xargs -r dirname | sort | uniq)
-        echo "variable_low = ${variable_low}"
-        echo "variable_low = $variable_low"
-        echo "variable_high = ${variable_high}"
-        echo "variable_high = $variable_high"
-      shell: bash
-
     - name: 'Set up Terraform'
       uses: hashicorp/setup-terraform@v1
-      with:
-        terraform_version: 1.0.11 # Specify your desired Terraform version
 
     - name: 'Install Terragrunt'
       run: |
@@ -75,7 +58,7 @@ jobs:
         for dir in $modified_dirs; do
           (
             cd $dir
-            terragrunt plan -out=tfplan
+            terragrunt plan
           )
         done
       shell: bash
@@ -87,14 +70,14 @@ jobs:
         for dir in $deleted_dirs; do
           (
             cd $dir
-            terragrunt plan -out=tfplan
+            terragrunt plan
           )
         done
       shell: bash
 
   terragrunt_apply:
     name: 'Terragrunt Apply'
-    needs: terragrunt_plan
+    # needs: terragrunt_plan
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     # if: github.ref == 'refs/heads/main'
@@ -132,7 +115,7 @@ jobs:
         for dir in $modified_dirs; do
           (
             cd $dir
-            terragrunt apply -auto-approve tfplan
+            terragrunt apply -auto-approve
           )
         done
       shell: bash
