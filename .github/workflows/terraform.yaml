@@ -27,19 +27,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: 'Debug'
-      run: |
-        ls
-        git rev-parse 'HEAD^1'
-        git diff --name-only --diff-filter=d $PREV_COMMIT origin/main | xargs -r dirname | sort | uniq
-        variable_low=$(git diff --name-only --diff-filter=d $PREV_COMMIT origin/main | xargs -r dirname | sort | uniq)
-        VARIABLE_HIGH=$(git diff --name-only --diff-filter=d $PREV_COMMIT origin/main | xargs -r dirname | sort | uniq)
-        echo "variable_low = ${variable_low}"
-        echo "variable_low = $variable_low"
-        echo "variable_high = ${variable_high}"
-        echo "variable_high = $VARIABLE_HIGH"
-      shell: bash
-
     # Fetch the main branch to compare
     - name: Fetch main branch
       run: git fetch origin main
