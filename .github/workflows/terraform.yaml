@@ -24,6 +24,13 @@ jobs:
     #   with:
     #     fetch-depth: 0 # Fetch all history for all branches and tags
 
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Fetch the main branch to compare
+    - name: Fetch main branch
+      run: git fetch origin main
+
     - name: 'Set up Terraform'
       uses: hashicorp/setup-terraform@v1
       with:
