@@ -71,7 +71,7 @@ jobs:
           (
             cd $dir
             ls
-            terragrunt plan
+            terragrunt plan -destroy
           )
         done
       shell: bash
