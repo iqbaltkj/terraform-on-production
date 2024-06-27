@@ -128,7 +128,6 @@ jobs:
 
   terragrunt_destroy:
     name: 'Terragrunt Destroy'
-    needs: terragrunt_plan
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
 
