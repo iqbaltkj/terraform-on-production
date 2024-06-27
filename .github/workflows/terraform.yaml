@@ -36,14 +36,14 @@ jobs:
         ls
         git branch --show-current
         git rev-parse 'HEAD^1'
-        PREV_COMMIT=$(git rev-parse 'HEAD^1')
-        git diff --name-only --diff-filter=d $PREV_COMMIT terraform/deployments| xargs -r dirname | sort | uniq
-        variable_low=$(git diff --name-only --diff-filter=d $PREV_COMMIT terraform/deployments| xargs -r dirname | sort | uniq)
-        VARIABLE_HIGH=$(git diff --name-only --diff-filter=d $PREV_COMMIT terraform/deployments| xargs -r dirname | sort | uniq)
+        prev_commit=$(git rev-parse 'HEAD^1')
+        git diff --name-only --diff-filter=d $prev_commit terraform/deployments| xargs -r dirname | sort | uniq
+        variable_low=$(git diff --name-only --diff-filter=d $prev_commit terraform/deployments| xargs -r dirname | sort | uniq)
+        variable_high=$(git diff --name-only --diff-filter=d $prev_commit terraform/deployments| xargs -r dirname | sort | uniq)
         echo "variable_low = ${variable_low}"
         echo "variable_low = $variable_low"
         echo "variable_high = ${variable_high}"
-        echo "variable_high = $VARIABLE_HIGH"
+        echo "variable_high = $variable_high"
       shell: bash
 
     - name: 'Set up Terraform'
@@ -68,31 +68,11 @@ jobs:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
         export_default_credentials: true
 
-    # - name: 'Fetch main branch'
-    #   run: git fetch origin main && git rev-parse 'HEAD^1' && git diff --name-only --diff-filter=d $PREV_COMMIT origin/main | xargs -r dirname | sort | uniq
-
-    - name: 'Determine Changed Directories'
-      run: "PREV_COMMIT=$(git rev-parse 'HEAD^1')\nMODIFIED_DIRS=$(git diff --name-only --diff-filter=d $PREV_COMMIT terraform/deployments| xargs -r dirname | sort | uniq)\necho \"Deleted dirs :\" \necho \"$MODIFIED\";\nDELETED_DIRS=$(git diff --name-only --diff-filter=D $PREV_COMMIT terraform/deployments| xargs -r dirname | sort | uniq)\necho \"Deleted dirs :\" \necho \"$DELETED_DIRS\"\n"
-      shell: bash
-
-    - name: 'Debug'
-      run: |
-        ls
-        git rev-parse 'HEAD^1'
-        git diff --name-only --diff-filter=d $PREV_COMMIT terraform/deployments| xargs -r dirname | sort | uniq
-        variable_low=$(git diff --name-only --diff-filter=d $PREV_COMMIT terraform/deployments| xargs -r dirname | sort | uniq)
-        VARIABLE_HIGH=$(git diff --name-only --diff-filter=d $PREV_COMMIT terraform/deployments| xargs -r dirname | sort | uniq)
-        echo "variable_low = ${variable_low}"
-        echo "variable_low = $variable_low"
-        echo "variable_high = ${variable_high}"
-        echo "variable_high = $VARIABLE_HIGH"
-      shell: bash
-
     - name: 'Terragrunt Plan Apply'
       run: |
-        PREV_COMMIT=$(git rev-parse 'HEAD^1')
-        MODIFIED_DIRS=$(git diff --name-only --diff-filter=d $PREV_COMMIT terraform/deployments| xargs -r dirname | sort | uniq)
-        for dir in $MODIFIED_DIRS; do
+        prev_commit=$(git rev-parse 'HEAD^1')
+        modified_dirs=$(git diff --name-only --diff-filter=d $prev_commit terraform/deployments| xargs -r dirname | sort | uniq)
+        for dir in $modified_dirs; do
           (
             cd $dir
             terragrunt plan -out=tfplan
@@ -102,9 +82,9 @@ jobs:
 
     - name: 'Terragrunt Plan Destroy'
       run: |
-        PREV_COMMIT=$(git rev-parse 'HEAD^1')
-        DELETED_DIRS=$(git diff --name-only --diff-filter=D $PREV_COMMIT terraform/deployments| xargs -r dirname | sort | uniq)
-        for dir in $DELETED_DIRS; do
+        prev_commit=$(git rev-parse 'HEAD^1')
+        deleted_dirs=$(git diff --name-only --diff-filter=D $prev_commit terraform/deployments| xargs -r dirname | sort | uniq)
+        for dir in $deleted_dirs; do
           (
             cd $dir
             terragrunt plan -out=tfplan
@@ -147,9 +127,9 @@ jobs:
 
     - name: 'Run Terragrunt Apply'
       run: |
-        PREV_COMMIT=$(git rev-parse 'HEAD^1')
-        MODIFIED_DIRS=$(git diff --name-only --diff-filter=d $PREV_COMMIT terraform/deployments| xargs -r dirname | sort | uniq)
-        for dir in $MODIFIED_DIRS; do
+        prev_commit=$(git rev-parse 'HEAD^1')
+        modified_dirs=$(git diff --name-only --diff-filter=d $prev_commit terraform/deployments| xargs -r dirname | sort | uniq)
+        for dir in $modified_dirs; do
           (
             cd $dir
             terragrunt apply -auto-approve tfplan
@@ -191,9 +171,9 @@ jobs:
 
     - name: 'Run Terragrunt Destroy'
       run: |
-        PREV_COMMIT=$(git rev-parse 'HEAD^1')
-        DELETED_DIRS=$(git diff --name-only --diff-filter=D $PREV_COMMIT terraform/deployments| xargs -r dirname | sort | uniq)
-        for dir in $DELETED_DIRS; do
+        prev_commit=$(git rev-parse 'HEAD^1')
+        deleted_dirs=$(git diff --name-only --diff-filter=D $prev_commit terraform/deployments| xargs -r dirname | sort | uniq)
+        for dir in $deleted_dirs; do
           (
             cd $dir
             terragrunt destroy -auto-approve
