@@ -19,13 +19,13 @@ jobs:
     if: github.event_name == 'pull_request'
 
     steps:
-    # - name: 'Checkout code'
-    #   uses: actions/checkout@v2
-    #   with:
-    #     fetch-depth: 0 # Fetch all history for all branches and tags
-
-    - name: Checkout code
+    - name: 'Checkout code'
       uses: actions/checkout@v2
+      with:
+        fetch-depth: 0 # Fetch all history for all branches and tags
+
+    # - name: Checkout code
+    #   uses: actions/checkout@v2
 
     # Fetch the main branch to compare
     - name: Fetch main branch
@@ -34,6 +34,7 @@ jobs:
     - name: 'Debug'
       run: |
         ls
+        git branch --show-current
         git rev-parse 'HEAD^1'
         PREV_COMMIT=$(git rev-parse 'HEAD^1')
         git diff --name-only --diff-filter=d $PREV_COMMIT terraform/deployments| xargs -r dirname | sort | uniq
