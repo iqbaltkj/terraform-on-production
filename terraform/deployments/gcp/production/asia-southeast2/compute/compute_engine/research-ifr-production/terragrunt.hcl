@@ -20,7 +20,7 @@ inputs = {
   }
 
   boot_disk = {
-    image       = "ubuntu-22-04"
+    image       = "ubuntu-2204-jammy-v20240627"
     size        = 20
     type        = "pd-ssd"
   }
