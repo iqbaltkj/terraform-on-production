@@ -16,7 +16,7 @@ module "compute_engine" {
     region       = "asia-southeast2"
     project      = "eternal-reserve-323019"
     name         = "storage-nfs-production"
-    machine_type = "e2-small"
+    machine_type = "e2-medium"
     ip_public    = true
     spot         = false
     subnetwork   = "vpc-subnet-services-production"
