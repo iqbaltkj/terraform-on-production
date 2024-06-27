@@ -167,7 +167,7 @@ jobs:
       run: |
         prev_commit=$(git rev-parse 'HEAD^1')
         deleted_dirs=$(git diff --name-only --diff-filter=D $prev_commit terraform/deployments| xargs -r dirname | sort | uniq)
-        git checkout $PREV_COMMIT
+        git checkout $prev_commit
         for dir in $deleted_dirs; do
           (
             cd $dir
